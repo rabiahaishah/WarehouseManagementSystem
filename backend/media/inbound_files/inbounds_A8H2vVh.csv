@@ -1,0 +1,3 @@
+sku,supplier,quantity,invoice_reference,received_date
+SKU001,ABC Supplier,10,INV001,2024-06-10
+SKU002,XYZ Trading,25,INV002,2024-06-11
