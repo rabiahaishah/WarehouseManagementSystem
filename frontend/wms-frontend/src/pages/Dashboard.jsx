@@ -27,7 +27,7 @@ function Dashboard() {
         Dashboard & Insights
       </h1>
 
-      {/* Grid Layout: Metrics + Recent Activities side-by-side */}
+      {/* Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {/* Metrics Card */}
         <div className="bg-white shadow-lg rounded-xl p-6">
