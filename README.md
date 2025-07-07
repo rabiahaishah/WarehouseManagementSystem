@@ -25,7 +25,7 @@ A full-featured, containerized Warehouse Management System (WMS) built using **D
 - File attachment support (e.g., delivery orders)
 - CSV bulk upload
 - Auto-update product inventory
-- Scan barcode to auto-select product
+- Scan barcode to automatically select the product
 
 ### Outbound Management
 - Record outbound stock dispatch
@@ -71,12 +71,24 @@ A full-featured, containerized Warehouse Management System (WMS) built using **D
 
 ## Installation & Setup
 
+### Prerequisites
+
+Before setting up the project locally, ensure the following tools are installed on your system:
+
+- **Python 3.9 or later** – for the Django backend  
+- **Node.js v16 or later** – required for the React frontend  
+- **npm** – comes bundled with Node.js
+- **PostgreSQL** – used as the database engine  
+- **Git** – to clone the repository  
+- **Docker**  
+- **Docker Compose**  
+
 ### Backend Setup 
 
 **1. Clone the repository:**
 ```bash
 git clone https://github.com/rabiahaishah/WarehouseManagementSystem.git
-cd wms-artiselite/backend
+cd backend
 ```
 
 **2. Create virtual environment & install dependencies:**
@@ -109,7 +121,7 @@ The API will be available at: http://127.0.0.1:8000/
 
 **1. Go to frontend folder:**
 ```
-cd wms-artiselite/frontend/wms_frontend
+cd frontend/wms-frontend
 ```
 
 **2. Install dependencies:**
