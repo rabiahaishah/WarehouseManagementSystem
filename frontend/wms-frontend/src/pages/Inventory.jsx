@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { hasPermission } from "../utils/permission";
 
-
 function Inventory() {
   const navigate = useNavigate();
   const [barcodeSKU, setBarcodeSKU] = useState(null);
@@ -11,9 +10,12 @@ function Inventory() {
   const [loading, setLoading] = useState(true);
   const [csvFile, setCsvFile] = useState(null);
   const [showArchived, setShowArchived] = useState(false);
-
   const [showForm, setShowForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState(null);
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [showLogs, setShowLogs] = useState(false);
+
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
@@ -24,44 +26,29 @@ function Inventory() {
     low_stock_threshold: 5,
   });
 
-  
-  const [selectedProductId, setSelectedProductId] = useState(null);
-  const [auditLogs, setAuditLogs] = useState([]);
-  const [showLogs, setShowLogs] = useState(false);
-
   useEffect(() => {
     fetchProducts();
   }, [search, showArchived]);
 
   const fetchProducts = async () => {
     const token = localStorage.getItem("access_token");
-
     try {
       let url = `http://127.0.0.1:8000/api/products/?search=${search}&page_size=1000`;
       url += `&is_archived=${showArchived ? "true" : "false"}`;
-
       const res = await fetch(url, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-
       if (res.status === 401 || res.status === 403) {
         alert("Session expired. Please login again.");
         localStorage.removeItem("access_token");
         window.location.href = "/login";
         return;
       }
-
       const data = await res.json();
       const items = data.results || data;
-
-      if (!Array.isArray(items)) {
-        console.error("Expected array, got:", items);
-        return;
-      }
-
-      setProducts(items);
+      setProducts(Array.isArray(items) ? items : []);
       setLoading(false);
     } catch (error) {
       console.error("Failed to fetch products:", error);
@@ -71,16 +58,12 @@ function Inventory() {
 
   const fetchAuditLogs = async (productId) => {
     const token = localStorage.getItem("access_token");
-
     try {
-      const res = await fetch(
-        `http://127.0.0.1:8000/api/audit-log/?product_id=${productId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await fetch(`http://127.0.0.1:8000/api/audit-log/?product_id=${productId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const data = await res.json();
       setAuditLogs(data);
       setShowLogs(true);
@@ -93,7 +76,6 @@ function Inventory() {
   const handleDelete = async (id) => {
     const token = localStorage.getItem("access_token");
     if (!window.confirm("Are you sure you want to delete this product?")) return;
-
     try {
       await fetch(`http://127.0.0.1:8000/api/products/${id}/`, {
         method: "DELETE",
@@ -127,10 +109,8 @@ function Inventory() {
   const handleUpload = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem("access_token");
-
     const formDataUpload = new FormData();
     formDataUpload.append("file", csvFile);
-
     try {
       await fetch("http://127.0.0.1:8000/api/upload-products/", {
         method: "POST",
@@ -139,12 +119,8 @@ function Inventory() {
         },
         body: formDataUpload,
       });
-
       alert("CSV upload complete!");
-
-      setTimeout(() => {
-        fetchProducts();
-      }, 1000);
+      setTimeout(fetchProducts, 1000);
     } catch (error) {
       alert("Failed to upload CSV.");
     }
@@ -154,7 +130,6 @@ function Inventory() {
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Inventory Management</h1>
 
-      {/* Search */}
       <div className="mb-4 flex flex-col md:flex-row md:items-center gap-2">
         <input
           type="text"
@@ -165,26 +140,27 @@ function Inventory() {
         />
       </div>
 
-      {/* Add + Archive Toggle */}
       <div className="mb-4 flex flex-col md:flex-row justify-between items-center gap-2">
-        <button
-          className="bg-green-600 text-white px-4 py-2 rounded"
-          onClick={() => {
-            setIsEditing(false);
-            setFormData({
-              name: "",
-              sku: "",
-              tags: "",
-              description: "",
-              category: "",
-              quantity: 0,
-              low_stock_threshold: 5,
-            });
-            setShowForm(true);
-          }}
-        >
-          + Add Product
-        </button>
+        {hasPermission(["admin", "manager", "operator"]) && (
+          <button
+            className="bg-green-600 text-white px-4 py-2 rounded"
+            onClick={() => {
+              setIsEditing(false);
+              setFormData({
+                name: "",
+                sku: "",
+                tags: "",
+                description: "",
+                category: "",
+                quantity: 0,
+                low_stock_threshold: 5,
+              });
+              setShowForm(true);
+            }}
+          >
+            + Add Product
+          </button>
+        )}
         <button
           onClick={() => setShowArchived(!showArchived)}
           className="bg-gray-200 text-sm px-3 py-1 rounded"
@@ -193,7 +169,6 @@ function Inventory() {
         </button>
       </div>
 
-      {/* CSV Upload */}
       {hasPermission(["admin"]) && (
         <form
           onSubmit={handleUpload}
@@ -216,7 +191,6 @@ function Inventory() {
         </form>
       )}
 
-      {/* Table */}
       {loading ? (
         <div>Loading...</div>
       ) : (
@@ -240,13 +214,7 @@ function Inventory() {
                 <td>{p.category}</td>
                 <td>{p.tags}</td>
                 <td>{p.quantity}</td>
-                <td
-                  className={
-                    p.quantity <= p.low_stock_threshold
-                      ? "text-red-600 font-semibold"
-                      : ""
-                  }
-                >
+                <td className={p.quantity <= p.low_stock_threshold ? "text-red-600 font-semibold" : ""}>
                   {p.quantity <= p.low_stock_threshold ? "LOW" : "OK"}
                 </td>
                 <td className="space-x-2">
@@ -267,39 +235,43 @@ function Inventory() {
                     <button
                       onClick={() => handleDelete(p.id)}
                       className="text-red-600 text-xs"
-                      >
+                    >
                       Delete
                     </button>
                   )}
 
-                  {p.is_archived ? (
-                    <button
-                      onClick={() => toggleArchive(p.id, false)}
-                      className="text-green-600 text-xs"
-                    >
-                      Unarchive
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => toggleArchive(p.id, true)}
-                      className="text-yellow-600 text-xs"
-                    >
-                      Archive
-                    </button>
+                  {hasPermission(["admin", "manager", "operator"]) && (
+                    p.is_archived ? (
+                      <button
+                        onClick={() => toggleArchive(p.id, false)}
+                        className="text-green-600 text-xs"
+                      >
+                        Unarchive
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => toggleArchive(p.id, true)}
+                        className="text-yellow-600 text-xs"
+                      >
+                        Archive
+                      </button>
+                    )
                   )}
+
                   <button
                     onClick={() => setBarcodeSKU(p.sku)}
                     className="text-purple-600 text-xs"
                   >
                     Barcode
                   </button>
+
                   {hasPermission(["admin"]) && (
-                   <button
-                    onClick={() => fetchAuditLogs(p.id)}
-                    className="text-indigo-600 text-xs"
-                  >
-                    Logs
-                  </button>
+                    <button
+                      onClick={() => fetchAuditLogs(p.id)}
+                      className="text-indigo-600 text-xs"
+                    >
+                      Logs
+                    </button>
                   )}
                 </td>
               </tr>

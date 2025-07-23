@@ -40,4 +40,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             'role': self.user.role  
         }
 
+        data['access'] = str(self.get_token(self.user).access_token)
+        data['refresh'] = str(self.get_token(self.user))
+
         return data

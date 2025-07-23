@@ -30,7 +30,7 @@ function App() {
         <Route path="/forecast" element={token ? <Forecast /> : <Navigate to="/login" replace />} />
 
         {/* Default route */}
-        <Route path="/" element={<Navigate to={token ? "/home" : "/login"} replace />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
   );
