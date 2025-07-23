@@ -17,7 +17,7 @@ import barcode
 from barcode.writer import ImageWriter
 import qrcode
 import pandas as pd
-from datetime import timedelta
+from datetime import datetime
 
 from .permissions import IsAdmin, IsManager, IsOperator
 from .utils import log_audit
@@ -177,15 +177,16 @@ class InboundBulkUploadView(APIView):
                     supplier=row.get('supplier', ''),
                     quantity=int(row['quantity']),
                     invoice_reference=row.get('invoice_reference', ''),
-                    received_date=row['received_date']
+                    received_date=datetime.strptime(row['received_date'], "%m/%d/%Y").date()
                 )
                 product.quantity += inbound.quantity
                 product.save()
                 log_audit(product, 'update', request.user if request.user.is_authenticated else None)
-            except (Product.DoesNotExist, Supplier.DoesNotExist):
-                continue
+            except Product.DoesNotExist:
+                continue 
 
         return Response({'message': 'Bulk inbound upload successful'})
+
 
 # -----------------------
 # Outbound Transactions
@@ -262,7 +263,7 @@ class OutboundBulkUploadView(APIView):
                     customer=row['customer'],
                     quantity=qty,
                     so_reference=row.get('so_reference', ''),
-                    dispatch_date=row['dispatch_date']
+                    dispatch_date=datetime.strptime(row['dispatch_date'], "%m/%d/%Y").date()
                 )
                 product.quantity -= qty
                 product.save()
